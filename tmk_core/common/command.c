@@ -238,6 +238,12 @@ static bool command_common(uint8_t code)
             wait_ms(1000);
             bootloader_jump(); // not return
             break;
+        case KC_SLCK:
+            clear_keyboard();
+            print("\n\nreset... ");
+            wait_ms(1000);
+            firmware_reset(); // not return
+            break;    
         case KC_D:
             if (debug_enable) {
                 print("\ndebug: off\n");

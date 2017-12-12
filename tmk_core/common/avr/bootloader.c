@@ -69,6 +69,7 @@
  * http://www.fourwalledcubicle.com/files/LUFA/Doc/120730/html/_page__software_bootloader_start.html
  */
 #define BOOTLOADER_RESET_KEY 0xB007B007
+
 uint32_t reset_key  __attribute__ ((section (".noinit")));
 
 /* initialize MCU status by watchdog reset */
@@ -87,12 +88,38 @@ void bootloader_jump(void) {
     _delay_ms(5);
 #endif
 
+#ifndef CATERINA_BOOTLOADER
     // watchdog reset
     reset_key = BOOTLOADER_RESET_KEY;
+#else
+    // for pro micro bootkey
+    uint16_t *const bootKeyPtr = (uint16_t *)0x0800;
+    *bootKeyPtr = 0x7777;
+#endif
+
     wdt_enable(WDTO_250MS);
     for (;;);
 }
 
+void firmware_reset(void) {
+#ifdef PROTOCOL_LUFA
+    USB_Disable();
+    cli();
+    _delay_ms(2000);
+#endif
+
+#ifdef PROTOCOL_PJRC
+    cli();
+    UDCON = 1;
+    USBCON = (1<<FRZCLK);
+    UCSR1B = 0;
+    _delay_ms(5);
+#endif    
+
+    reset_key = 0;
+    wdt_enable(WDTO_250MS);
+    for (;;);
+}
 
 /* this runs before main() */
 void bootloader_jump_after_watchdog_reset(void) __attribute__ ((used, naked, section (".init3")));
